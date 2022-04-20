@@ -10,7 +10,7 @@ import {constants} from "http2";
 
   // Set the network port
   const port = process.env.PORT || 8082;
-  
+
   // Use the body parser middleware for post requests
   app.use(bodyParser.json());
 
@@ -30,44 +30,62 @@ import {constants} from "http2";
 
   /**************************************************************************** */
 
-  app.get("/filteredimage", async(req: Request, res: Response) => {
-    let { image_url } = req.query;
+      //  Regex for image_url
+  const regExpImageURL = /\.(avif|gif|jpeg|jpg|png|svg|webp)$/;
 
-    if(isBlank(image_url)){
-      console.log(`image_url must not be blank`);
+  //  Regex for blank
+  const regExpBlank = /^\s*$/;
+
+  //  Handle No matching resource found for given API Request
+  app.use(function (req, res, next) {
+    if (req.path != '/filteredimage' && req.path != '/') {
+      console.error(`No matching resource found for given API Request, request path: ` + req.path);
+      res.status(constants.HTTP_STATUS_NOT_FOUND).send(`No matching resource found for given API Request!`);
+    }
+    next()
+  })
+
+  app.get("/filteredimage", async (req: Request, res: Response) => {
+    let {image_url} = req.query;
+
+    //  1. validate the image_url query
+    if (isBlank(image_url)) {
+      console.error(`image_url must not be blank`);
       return res.status(constants.HTTP_STATUS_BAD_REQUEST)
-          .send(`image_url must not be blank`);
+          .send(`image_url must not be blank!`);
     }
 
-    if (!isValidImage(image_url)){
-      console.log("image_url is not an image, image_url: " + image_url);
-      // return res.status(400).send(`image_url is not an image, image_url: ` + image_url);
+    //  1. validate the image_url query
+    if (!isValidImage(image_url)) {
+      console.error("image_url is not an image, image_url: " + image_url);
       return res.status(constants.HTTP_STATUS_BAD_REQUEST)
           .send(`image_url is not an image, image_url: ` + image_url);
 
     }
 
+    //  2. call filterImageFromURL(image_url) to filter the image
     filterImageFromURL(image_url).then(result_image_url => {
-
+      //  3. send the resulting file in the response
       res.status(constants.HTTP_STATUS_OK)
           .sendFile(result_image_url, () => {
-        deleteLocalFiles([result_image_url]);
-        console.log(`Local image is deleted successfully.`);
-      });
+            //  4. deletes any files on the server on finish of the response
+            deleteLocalFiles([result_image_url]);
+            console.log(`Local image is deleted successfully.`);
+          });
       console.log(`Image is sent successfully.`);
     }).catch((e) => {
-      console.log(`Error when filter image from url, image_url: ` + image_url + `, ` + e);
+      console.error(`Error when filter image from url, image_url: ` + image_url + `, ` + e);
       return res.status(constants.HTTP_STATUS_UNPROCESSABLE_ENTITY)
           .send(`Error when filter image from url, image_url: ` + image_url);
     });
   })
 
   function isBlank(image_url: string) {
-    return (!image_url || /^\s*$/.test(image_url));
+    return (!image_url || regExpBlank.test(image_url));
   }
 
   function isValidImage(image_url: string) {
-    return /\.(avif|gif|jpeg|jpg|png|svg|webp)$/.test(image_url);
+    return regExpImageURL.test(image_url);
   }
 
   //! END @TODO1
