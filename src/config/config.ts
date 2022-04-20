@@ -1,4 +1,4 @@
-import prefix from "loglevel-plugin-prefix";
+import prefix from 'loglevel-plugin-prefix';
 
 let option = {
     defaults: {
