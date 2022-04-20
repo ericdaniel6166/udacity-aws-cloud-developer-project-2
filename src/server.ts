@@ -30,7 +30,7 @@ import {constants} from "http2";
 
   /**************************************************************************** */
 
-      //  Regex for image_url
+  //  Regex for image_url
   const regExpImageURL = /\.(avif|gif|jpeg|jpg|png|svg|webp)$/;
 
   //  Regex for blank
@@ -46,25 +46,25 @@ import {constants} from "http2";
   })
 
   app.get("/filteredimage", async (req: Request, res: Response) => {
-    let {image_url} = req.query;
+    let imageURL = req.query.image_url;
 
     //  1. validate the image_url query
-    if (isBlank(image_url)) {
+    if (isBlank(imageURL)) {
       console.error(`image_url must not be blank`);
       return res.status(constants.HTTP_STATUS_BAD_REQUEST)
           .send(`image_url must not be blank!`);
     }
 
     //  1. validate the image_url query
-    if (!isValidImage(image_url)) {
-      console.error("image_url is not an image, image_url: " + image_url);
-      return res.status(constants.HTTP_STATUS_BAD_REQUEST)
-          .send(`image_url is not an image, image_url: ` + image_url);
+    if (!isValidImage(imageURL)) {
+      console.error("image_url is not supported, image_url: " + imageURL);
+      return res.status(constants.HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE)
+          .send(`image_url is not supported!`);
 
     }
 
     //  2. call filterImageFromURL(image_url) to filter the image
-    filterImageFromURL(image_url).then(result_image_url => {
+    filterImageFromURL(imageURL).then(result_image_url => {
       //  3. send the resulting file in the response
       res.status(constants.HTTP_STATUS_OK)
           .sendFile(result_image_url, () => {
@@ -74,18 +74,18 @@ import {constants} from "http2";
           });
       console.log(`Image is sent successfully.`);
     }).catch((e) => {
-      console.error(`Error when filter image from url, image_url: ` + image_url + `, ` + e);
+      console.error(`Error when process image from url, image_url: ` + imageURL + `, Error message: ` + e.message);
       return res.status(constants.HTTP_STATUS_UNPROCESSABLE_ENTITY)
-          .send(`Error when filter image from url, image_url: ` + image_url);
+          .send(`Error when process image from url, Error message: ` + e.message);
     });
   })
 
-  function isBlank(image_url: string) {
-    return (!image_url || regExpBlank.test(image_url));
+  function isBlank(imageURL: string) {
+    return (!imageURL || regExpBlank.test(imageURL));
   }
 
-  function isValidImage(image_url: string) {
-    return regExpImageURL.test(image_url);
+  function isValidImage(imageURL: string) {
+    return regExpImageURL.test(imageURL);
   }
 
   //! END @TODO1
