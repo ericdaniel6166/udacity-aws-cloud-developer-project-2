@@ -41,7 +41,7 @@ import { log } from './config/config';
   app.use(function (req, res, next) {
     if (req.path != "/filteredimage" && req.path != "/") {
       log.error("No matching resource found for given API Request, request path: ", req.path);
-      res.status(constants.HTTP_STATUS_NOT_FOUND).send("No matching resource found for given API Request!");
+      res.status(constants.HTTP_STATUS_NOT_FOUND).send("No matching resource found for given API Request");
     }
     next()
   })
@@ -53,14 +53,14 @@ import { log } from './config/config';
     if (isBlank(imageURL)) {
       log.error("image_url must not be blank");
       return res.status(constants.HTTP_STATUS_BAD_REQUEST)
-          .send("image_url must not be blank!");
+          .send("image_url must not be blank");
     }
 
     //  1. validate the image_url query
     if (!isValidImage(imageURL)) {
       log.error("image_url is not supported, image_url: ", imageURL);
       return res.status(constants.HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE)
-          .send("image_url is not supported!");
+          .send("image_url is not supported");
 
     }
 
@@ -71,9 +71,9 @@ import { log } from './config/config';
           .sendFile(result_image_url, () => {
             //  4. deletes any files on the server on finish of the response
             deleteLocalFiles([result_image_url]);
-            log.debug("Local image is deleted successfully.");
+            log.debug("Local image is deleted successfully");
           });
-      log.debug("Image is sent successfully.");
+      log.debug("Image is sent successfully");
     }).catch((e) => {
       log.error("Error when process image from url, image_url: " + imageURL + ", Error message: " + e.message);
       return res.status(constants.HTTP_STATUS_UNPROCESSABLE_ENTITY)
