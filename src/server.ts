@@ -37,8 +37,40 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
     res.send("try GET /filteredimage?image_url={{}}")
   } );
 
+  app.get("/filteredimage", async(req: Request, res: Response) => {
+    let { image_url } = req.query;
 
-  
+    if(isBlank(image_url)){
+      console.log(`image_url must not be blank`);
+      return res.status(400).send(`image_url must not be blank`);
+    }
+
+    if (!isImage(image_url)){
+      console.log("image_url is not an image, image_url: " + image_url);
+      return res.status(400).send(`image_url is not an image, image_url: ` + image_url);
+
+    }
+
+    filterImageFromURL(image_url).then(result_image_url => {
+
+      res.status(200).sendFile(result_image_url, () => {
+        deleteLocalFiles([result_image_url]);
+        console.log(`Local image is deleted`);
+      });
+      console.log(`Image is sent`);
+    }).catch((e) => {
+      console.log(`Error when filter image from url, image_url: ` + image_url + `, ` + e);
+      return res.status(422).send(`Could not get image, image_url: ` + image_url);
+    });
+  })
+
+  function isBlank(image_url: string) {
+    return (!image_url || /^\s*$/.test(image_url));
+  }
+
+  function isImage(image_url: string) {
+    return /\.(avif|gif|jpeg|jpg|png|svg|webp)$/.test(image_url);
+  }
 
   // Start the Server
   app.listen( port, () => {
