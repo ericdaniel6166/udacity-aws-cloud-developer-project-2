@@ -1,6 +1,7 @@
 import express, {Request, Response} from 'express';
 import bodyParser from 'body-parser';
 import {filterImageFromURL, deleteLocalFiles} from './util/util';
+import {constants} from "http2";
 
 (async () => {
 
@@ -34,25 +35,30 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
 
     if(isBlank(image_url)){
       console.log(`image_url must not be blank`);
-      return res.status(400).send(`image_url must not be blank`);
+      return res.status(constants.HTTP_STATUS_BAD_REQUEST)
+          .send(`image_url must not be blank`);
     }
 
-    if (!isImage(image_url)){
+    if (!isValidImage(image_url)){
       console.log("image_url is not an image, image_url: " + image_url);
-      return res.status(400).send(`image_url is not an image, image_url: ` + image_url);
+      // return res.status(400).send(`image_url is not an image, image_url: ` + image_url);
+      return res.status(constants.HTTP_STATUS_BAD_REQUEST)
+          .send(`image_url is not an image, image_url: ` + image_url);
 
     }
 
     filterImageFromURL(image_url).then(result_image_url => {
 
-      res.status(200).sendFile(result_image_url, () => {
+      res.status(constants.HTTP_STATUS_OK)
+          .sendFile(result_image_url, () => {
         deleteLocalFiles([result_image_url]);
         console.log(`Local image is deleted successfully.`);
       });
       console.log(`Image is sent successfully.`);
     }).catch((e) => {
       console.log(`Error when filter image from url, image_url: ` + image_url + `, ` + e);
-      return res.status(422).send(`Could not get image, image_url: ` + image_url);
+      return res.status(constants.HTTP_STATUS_UNPROCESSABLE_ENTITY)
+          .send(`Error when filter image from url, image_url: ` + image_url);
     });
   })
 
@@ -60,7 +66,7 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
     return (!image_url || /^\s*$/.test(image_url));
   }
 
-  function isImage(image_url: string) {
+  function isValidImage(image_url: string) {
     return /\.(avif|gif|jpeg|jpg|png|svg|webp)$/.test(image_url);
   }
 
